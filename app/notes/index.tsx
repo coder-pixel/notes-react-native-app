@@ -4,17 +4,19 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  Alert,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import AddNoteModal from "@/components/AddNoteModal";
 import NoteList from "@/components/NoteList";
+import noteService from "@/services/noteService";
+import FullScreenLoader from "@/components/FullScreenLoader";
 
 const NotesScreen = () => {
-  const [notes, setNotes] = useState([
-    { id: "1", text: "Note One" },
-    { id: "2", text: "Note Two" },
-    { id: "3", text: "Note Three" },
-  ]);
+  const [notes, setNotes] = useState<any>([]);
+  const [loading, setLoading] = useState({
+    fetchLoading: false,
+  });
 
   const [addEditNoteModal, setAddEditNoteModal] = useState({
     isOpen: false,
@@ -25,15 +27,45 @@ const NotesScreen = () => {
     setAddEditNoteModal({ isOpen, data });
   };
 
+  const _manageLoading = (key: string, value: boolean) => {
+    setLoading((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const _fetchNotes = async () => {
+    try {
+      _manageLoading("fetchLoading", true);
+
+      const response = await noteService?.getNotes();
+
+      console.log({ response });
+      setNotes(response?.data);
+    } catch (err: any) {
+      console.log({ err });
+      Alert.alert("Error", err);
+    } finally {
+      _manageLoading("fetchLoading", false);
+    }
+  };
+
+  useEffect(() => {
+    _fetchNotes();
+  }, []);
+
   return (
     <View style={styles?.container}>
-      <NoteList notes={notes} />
-      <TouchableOpacity
-        style={styles?.addButton}
-        onPress={() => _toggleAddEditNoteModal(true)}
-      >
-        <Text style={styles?.addButtonText}>+ Add</Text>
-      </TouchableOpacity>
+      {notes?.length ? (
+        <>
+          <NoteList notes={notes} />
+          <TouchableOpacity
+            style={styles?.addButton}
+            onPress={() => _toggleAddEditNoteModal(true)}
+          >
+            <Text style={styles?.addButtonText}>+ Add</Text>
+          </TouchableOpacity>
+        </>
+      ) : loading?.fetchLoading ? (
+        <FullScreenLoader />
+      ) : null}
 
       {/* Modal */}
       <AddNoteModal
