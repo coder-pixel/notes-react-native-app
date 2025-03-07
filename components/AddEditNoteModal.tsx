@@ -1,14 +1,29 @@
-import { View, Text, StyleSheet, Modal, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Modal,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import React, { useEffect, useState } from "react";
 import { TextInput } from "react-native";
+import noteService from "@/services/noteService";
 
 interface AddNoteModalProps {
   isOpen: boolean;
-  data?: string;
+  data?: any;
   toggleModal: () => void;
+  onSuccess: any;
 }
 
-const AddNoteModal = ({ isOpen, data, toggleModal }: AddNoteModalProps) => {
+const AddEditNoteModal = ({
+  isOpen,
+  data,
+  toggleModal,
+  onSuccess,
+}: AddNoteModalProps) => {
   const [formFields, setFormFields] = useState<Record<string, string>>({
     note: "",
   });
@@ -18,6 +33,15 @@ const AddNoteModal = ({ isOpen, data, toggleModal }: AddNoteModalProps) => {
   const [errors, setErrors] = useState<Record<string, null | string>>({
     note: null,
   });
+
+  const [loading, setLoading] = useState({
+    fetchLoading: false,
+    submitLoading: false,
+  });
+
+  const _manageLoading = (key: string, value: boolean) => {
+    setLoading((prev) => ({ ...prev, [key]: value }));
+  };
 
   const _onClose = () => {
     setFormFields({
@@ -84,27 +108,56 @@ const AddNoteModal = ({ isOpen, data, toggleModal }: AddNoteModalProps) => {
   };
 
   const _onSubmit = async () => {
-    const newFormFields = { ...formFields };
-    const newIsDirty = { note: true };
+    let res;
+    try {
+      _manageLoading("submitLoading", true);
+      const newFormFields = { ...formFields };
+      const newIsDirty = { note: true };
 
-    const isFormValid = await _validateFormFields({
-      newFormFields,
-      newIsDirty,
-    });
+      const isFormValid = await _validateFormFields({
+        newFormFields,
+        newIsDirty,
+      });
 
-    if (!isFormValid) {
-      return;
+      if (!isFormValid) {
+        Alert.alert("Error", "Note cannot be empty");
+        return;
+      }
+
+      // make api call here
+      const payload = newFormFields?.note || "";
+      console.log({ payload });
+
+      if (data) {
+        // update call
+        res = await noteService?.updateNote(data?.$id, payload);
+      } else {
+        // create call
+        res = await noteService?.addNote(payload);
+      }
+
+      console.log({ res });
+      if (!res?.error) {
+        onSuccess(
+          `${data ? "update" : "add"}`,
+          res?.data!,
+          data ? data?.$id : null
+        );
+      }
+      _onClose();
+    } catch (err) {
+      console.log({ err });
+      Alert?.alert("Error", res?.error);
+    } finally {
+      _manageLoading("submitLoading", false);
     }
-
-    // make api call here
-
-    _onClose();
   };
 
   const _setFormData = (data: any) => {
+    console.log({ data });
     const newFormFields = { ...formFields };
 
-    newFormFields["note"] = data?.note || "";
+    newFormFields["note"] = data?.text || "";
 
     setFormFields(newFormFields);
   };
@@ -144,9 +197,16 @@ const AddNoteModal = ({ isOpen, data, toggleModal }: AddNoteModalProps) => {
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.saveButton} onPress={_onSubmit}>
+            <TouchableOpacity
+              style={styles.saveButton}
+              onPress={_onSubmit}
+              disabled={loading?.submitLoading}
+            >
               <Text style={styles.saveButtonText}>
-                {data ? "Update" : "Save"}
+                {data ? "Update" : "Save"}{" "}
+                {loading?.submitLoading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : null}
               </Text>
             </TouchableOpacity>
           </View>
@@ -156,7 +216,7 @@ const AddNoteModal = ({ isOpen, data, toggleModal }: AddNoteModalProps) => {
   );
 };
 
-export default AddNoteModal;
+export default AddEditNoteModal;
 
 const styles = StyleSheet.create({
   modalOverlay: {
