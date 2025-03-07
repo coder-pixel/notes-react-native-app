@@ -4,8 +4,13 @@ import NoteList from "@/components/NoteList";
 import noteService from "@/services/noteService";
 import FullScreenLoader from "@/components/FullScreenLoader";
 import AddEditNoteModal from "@/components/AddEditNoteModal";
+import { useRouter } from "expo-router";
+import { useAuth } from "@/contexts/AuthContext";
 
 const NotesScreen = () => {
+  const router = useRouter();
+  const { user, loading: authLoading, logout } = useAuth();
+
   const [notes, setNotes] = useState<any>([]);
   const [loading, setLoading] = useState({
     fetchLoading: false,
@@ -92,11 +97,29 @@ const NotesScreen = () => {
   };
 
   useEffect(() => {
-    _fetchNotes();
-  }, []);
+    if (!authLoading && !user) {
+      router.replace("/auth");
+    }
+  }, [user, authLoading]);
+
+  useEffect(() => {
+    if (user) {
+      _fetchNotes();
+    }
+  }, [user]);
+
+  if (authLoading) {
+    <FullScreenLoader />;
+  }
 
   return (
     <View style={styles?.container}>
+      {user ? (
+        <TouchableOpacity style={styles?.logoutButton} onPress={logout}>
+          <Text style={styles?.logoutText}>Logout</Text>
+        </TouchableOpacity>
+      ) : null}
+
       {notes?.length ? (
         <>
           <NoteList
@@ -115,7 +138,6 @@ const NotesScreen = () => {
       ) : loading?.fetchLoading ? (
         <FullScreenLoader />
       ) : null}
-
       {/* Modal */}
       <AddEditNoteModal
         isOpen={addEditNoteModal?.isOpen}
@@ -164,5 +186,17 @@ const styles = StyleSheet?.create({
     fontWeight: "bold",
     color: "#555",
     marginTop: 15,
+  },
+  logoutButton: {
+    marginRight: 15,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    backgroundColor: "#ff3b30",
+    borderRadius: 8,
+  },
+  logoutText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });

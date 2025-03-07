@@ -34,9 +34,7 @@ const authService = {
     try {
       return await account?.get();
     } catch (error: any) {
-      return {
-        error: error?.message || "Error fetching user. Please try again",
-      };
+      return null;
     }
   },
 

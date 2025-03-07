@@ -1,12 +1,33 @@
+import { useAuth } from "@/contexts/AuthContext";
 import { router, useRouter } from "expo-router";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useEffect } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-// declare module "*.png" {
-//   const value: string;
-//   export default value;
-// }
 const HomeScreen = () => {
   const router = useRouter();
+
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace("/notes");
+    }
+  }, [user, loading]);
+
+  if (loading) {
+    return (
+      <View style={styles.centeredContainter}>
+        <ActivityIndicator size="large" color="#007bff" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles?.container}>

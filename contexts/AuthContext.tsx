@@ -10,7 +10,8 @@ interface GlobalContextType {
   logout: any;
 }
 
-const AuthContext = createContext<GlobalContextType | undefined>(undefined);
+// const AuthContext = createContext<GlobalContextType | undefined>(undefined);
+const AuthContext = createContext<any>(undefined);
 
 interface GlobalProviderProps {
   children: ReactNode;
@@ -24,7 +25,7 @@ export const AuthProvider = ({ children }: GlobalProviderProps) => {
     try {
       setLoading(true);
 
-      const res = await authService?.getUser();
+      const res: any = await authService?.getUser();
 
       // if (res?.error) {
       //   console.error(res?.error);
@@ -32,6 +33,7 @@ export const AuthProvider = ({ children }: GlobalProviderProps) => {
       // } else {
       //   setUser(res);
       // }
+      console.log({ res });
       setUser(res);
 
       setLoading(false);
@@ -46,22 +48,22 @@ export const AuthProvider = ({ children }: GlobalProviderProps) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await authService?.login(email, password);
+    const response: any = await authService?.login(email, password);
 
-    // if (response?.error) {
-    //   return response;
-    // }
+    if (response?.error) {
+      return response;
+    }
 
     await _checkUser();
     return { success: true };
   };
 
   const register = async (email: string, password: string) => {
-    const response = await authService.register(email, password);
+    const response: any = await authService.register(email, password);
 
-    // if (response?.error) {
-    //   return response;
-    // }
+    if (response?.error) {
+      return response;
+    }
 
     return login(email, password); // Auto-login after register
   };
@@ -70,6 +72,7 @@ export const AuthProvider = ({ children }: GlobalProviderProps) => {
     await authService.logout();
     setUser(null);
     await _checkUser();
+    console.log("logout done");
   };
 
   return (
