@@ -26,6 +26,10 @@ switch (Platform.OS) {
   }
 }
 
+// for database
 const database = new Databases(client);
 
-export { database, client, config };
+// for auth
+const account = new Account(client);
+
+export { database, client, config, account };
