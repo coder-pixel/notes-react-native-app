@@ -1,4 +1,4 @@
-import { ID } from "react-native-appwrite";
+import { ID, Query } from "react-native-appwrite";
 import databaseService from "./databaseService";
 
 // Appwrite database and collection id
@@ -8,18 +8,18 @@ const colId = process.env.EXPO_PUBLIC_APPWRITE_COLLECTION_ID!;
 console.log("goel ", { dbId, colId });
 const noteService = {
   // Get Notes
-  async getNotes() {
-    // if (!userId) {
-    //   console.error("Error: Missing userId in getNotes()");
-    //   return {
-    //     data: [],
-    //     error: "User ID is missing",
-    //   };
-    // }
+  async getNotes(userId: string) {
+    if (!userId) {
+      console.error("Error: Missing userId in getNotes()");
+      return {
+        data: [],
+        error: "User ID is missing",
+      };
+    }
 
     try {
       const response = await databaseService?.getDocuments(dbId!, colId!, [
-        // Query.equal("user_id", userId),
+        Query.equal("user_Id", userId),
       ]);
       return response;
     } catch (error: any) {
@@ -29,7 +29,7 @@ const noteService = {
   },
 
   // add new note
-  async addNote(text: string) {
+  async addNote(user_Id: string, text: string) {
     try {
       if (!text) {
         return { data: null, error: "Note text is required" };
@@ -38,6 +38,7 @@ const noteService = {
       const data = {
         text,
         createdAt: new Date()?.toISOString(),
+        user_Id,
       };
 
       const response = await databaseService?.createDocument(

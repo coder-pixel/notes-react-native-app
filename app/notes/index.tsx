@@ -34,7 +34,7 @@ const NotesScreen = () => {
     try {
       _manageLoading("fetchLoading", true);
 
-      const response = await noteService?.getNotes();
+      const response = await noteService?.getNotes(user?.$id);
       console.log({ response });
 
       if (response?.error) {
@@ -112,12 +112,17 @@ const NotesScreen = () => {
     <FullScreenLoader />;
   }
 
+  console.log({ user });
   return (
     <View style={styles?.container}>
       {user ? (
-        <TouchableOpacity style={styles?.logoutButton} onPress={logout}>
-          <Text style={styles?.logoutText}>Logout</Text>
-        </TouchableOpacity>
+        <View style={styles?.parentCon}>
+          <TouchableOpacity style={styles?.logoutButton} onPress={logout}>
+            <Text style={styles?.logoutText}>Logout</Text>
+          </TouchableOpacity>
+
+          <Text>{user?.name || user?.email}</Text>
+        </View>
       ) : null}
 
       {notes?.length ? (
@@ -128,16 +133,19 @@ const NotesScreen = () => {
             onEdit={(note: string) => _handleEdit(note)}
             loading={loading}
           />
-          <TouchableOpacity
-            style={styles?.addButton}
-            onPress={() => _toggleAddEditNoteModal(true)}
-          >
-            <Text style={styles?.addButtonText}>+ Add</Text>
-          </TouchableOpacity>
         </>
       ) : loading?.fetchLoading ? (
         <FullScreenLoader />
-      ) : null}
+      ) : (
+        <Text style={styles?.noNotesText}>No Notes Available</Text>
+      )}
+
+      <TouchableOpacity
+        style={styles?.addButton}
+        onPress={() => _toggleAddEditNoteModal(true)}
+      >
+        <Text style={styles?.addButtonText}>+ Add</Text>
+      </TouchableOpacity>
       {/* Modal */}
       <AddEditNoteModal
         isOpen={addEditNoteModal?.isOpen}
@@ -158,6 +166,11 @@ const styles = StyleSheet?.create({
     flex: 1,
     padding: 20,
     backgroundColor: "#fff",
+  },
+  parentCon: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
   },
   addButton: {
     position: "absolute",

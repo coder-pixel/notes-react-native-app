@@ -10,6 +10,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { TextInput } from "react-native";
 import noteService from "@/services/noteService";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AddNoteModalProps {
   isOpen: boolean;
@@ -24,6 +25,8 @@ const AddEditNoteModal = ({
   toggleModal,
   onSuccess,
 }: AddNoteModalProps) => {
+  const { user } = useAuth();
+
   const [formFields, setFormFields] = useState<Record<string, string>>({
     note: "",
   });
@@ -125,15 +128,18 @@ const AddEditNoteModal = ({
       }
 
       // make api call here
-      const payload = newFormFields?.note || "";
-      console.log({ payload });
+      // const payload = newFormFields?.note || "";
+      // console.log({ payload });
 
       if (data) {
         // update call
-        res = await noteService?.updateNote(data?.$id, payload);
+        res = await noteService?.updateNote(
+          data?.$id,
+          newFormFields?.note || ""
+        );
       } else {
         // create call
-        res = await noteService?.addNote(payload);
+        res = await noteService?.addNote(user?.$id, newFormFields?.note || "");
       }
 
       console.log({ res });
